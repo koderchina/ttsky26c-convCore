@@ -1,54 +1,69 @@
 # Tiny Tapeout project information
 project:
-  title:        ""      # Project title
-  author:       ""      # Your name
+  title:        "Programmable convolution block accelerator"      # Project title
+  author:       "Borna Kruslin"      # Your name
   discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  ""      # One line description of what your project does
+  description:  "Programmable 3x3 convolution accelerator: conv + bias + ReLU + 2x2 max-pool on 4-bit signed data, streamed over a byte-wide ready/valid handshake (two 4-bit values per byte)."      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
-  tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
+  tiles: "2x2"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
 
   # Your top module name must start with "tt_um_". Make it unique by including your github username:
-  top_module:  "tt_um_example"
+  top_module:  "tt_um_koderchina_convCore"
 
   # List your project's source files here.
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
-    - "project.v"
+    - "tt_um_koderchina_convCore.v"
+    - "top.v"
+    - "convCore.v"
+    - "convLayer.v"
+    - "conv.v"
+    - "pad.v"
+    - "pe.v"
+    - "relu.v"
+    - "maxpool.v"
+    - "config_regfile.v"
+    - "weight_regfile.v"
+    - "weight_bank.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: ""
-  ui[1]: ""
-  ui[2]: ""
-  ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
+  # Host -> design byte. Carries TWO 4-bit signed values: [3:0] is consumed
+  # first, then [7:4]. Same byte format for register writes and pixel data.
+  ui[0]: "DIN0 - first value, bit 0"
+  ui[1]: "DIN1 - first value, bit 1"
+  ui[2]: "DIN2 - first value, bit 2"
+  ui[3]: "DIN3 - first value, sign bit"
+  ui[4]: "DIN4 - second value, bit 0"
+  ui[5]: "DIN5 - second value, bit 1"
+  ui[6]: "DIN6 - second value, bit 2"
+  ui[7]: "DIN7 - second value, sign bit"
 
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
+  # Design -> host byte. One pooled feature-map value per byte, in [3:0].
+  uo[0]: "DOUT0 - pooled value, bit 0"
+  uo[1]: "DOUT1 - pooled value, bit 1"
+  uo[2]: "DOUT2 - pooled value, bit 2"
+  uo[3]: "DOUT3 - pooled value, sign bit"
   uo[4]: ""
   uo[5]: ""
   uo[6]: ""
   uo[7]: ""
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
-  uio[5]: ""
+  # [2:0] inputs, [5:3] outputs, [7:6] unused. uio_oe is static 8'b0011_1000.
+  uio[0]: "MODE - 0 = PROGRAM registers, 1 = STREAM a frame"
+  uio[1]: "IN_VALID - host has a byte on ui_in this cycle"
+  uio[2]: "OUT_READY - host can accept a byte on uo_out this cycle"
+  uio[3]: "IN_READY - design can accept a byte on ui_in this cycle"
+  uio[4]: "OUT_VALID - uo_out holds a pooled output byte this cycle"
+  uio[5]: "BUSY - design is mid-frame (STREAM or DRAIN)"
   uio[6]: ""
   uio[7]: ""
 
