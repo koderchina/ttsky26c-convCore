@@ -44,7 +44,7 @@ module tt_um_koderchina_convCore (
   top #(
       .DATA_WIDTH      (4),     // nibble width; two per pin byte
       .KERNEL_SIZE     (3),
-      .MAX_H_IN        (16),
+      .MAX_H_IN        (8),
       .MAX_W_IN        (1024),
       .MAX_IN_CHANNELS (4),
       .MAX_PAD         (1),
